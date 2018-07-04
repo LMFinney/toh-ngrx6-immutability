@@ -17,9 +17,7 @@
     "eofline": true,
     "forin": true,
     "import-blacklist": [
-      true,
-      "rxjs",
-      "rxjs/Rx"
+      false
     ],
     "import-spacing": true,
     "indent": [
@@ -30,7 +28,7 @@
     "label-position": true,
     "max-line-length": [
       true,
-      140
+      80
     ],
     "member-access": false,
     "member-ordering": [
@@ -73,6 +71,12 @@
     "no-trailing-whitespace": true,
     "no-unnecessary-initializer": true,
     "no-unused-expression": true,
+    "no-unused-variable": [
+      true,
+      {
+        "ignore-pattern": "^_"
+      }
+    ],
     "no-use-before-declare": true,
     "no-var-keyword": true,
     "object-literal-sort-keys": false,
@@ -107,7 +111,6 @@
         "variable-declaration": "nospace"
       }
     ],
-    "typeof-compare": true,
     "unified-signatures": true,
     "variable-name": false,
     "whitespace": [
