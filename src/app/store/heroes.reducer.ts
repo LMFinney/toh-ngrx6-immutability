@@ -1,16 +1,20 @@
+import { EntityAdapter, EntityState, createEntityAdapter } from '@ngrx/entity';
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 
 import { Hero } from '../hero';
 import { HeroActionTypes, HeroActionsUnion } from './hero.actions';
 
-export interface HeroState {
-  heroes: Hero[];
+export interface HeroState extends EntityState<Hero> {
   selectedHeroId?: number;
 }
 
-const initialState: HeroState = {
-  heroes: []
-};
+export const adapter: EntityAdapter<Hero> = createEntityAdapter<Hero>({
+  sortComparer: false,
+});
+
+export const initialState: HeroState = adapter.getInitialState({
+  selectedHeroId: undefined,
+});
 
 export function heroReducer(
   state = initialState, action: HeroActionsUnion
@@ -20,32 +24,22 @@ export function heroReducer(
       return { ...state, selectedHeroId: action.payload.id };
     }
     case HeroActionTypes.DeleteHeroSuccess: {
-      return {
-        ...state,
-        selectedHeroId: undefined,
-        heroes: state.heroes.filter(hero => hero.id !== action.payload.id)
-      };
+      return adapter.removeOne(
+        action.payload.id,
+        { ...state, selectedHeroId: undefined }
+      );
     }
     case HeroActionTypes.LoadHeroesSuccess: {
-      return { ...state, heroes: action.payload };
+      return adapter.addAll(action.payload, state);
     }
     case HeroActionTypes.AddHeroSuccess: {
-      return { ...state, heroes: [...state.heroes, action.payload] };
+      return adapter.addOne(action.payload, state);
     }
     case HeroActionTypes.UpdateHeroSuccess: {
-      const index = state.heroes
-        .findIndex((hero: Hero) => hero.id === action.payload.id);
-      if (index >= 0) {
-        const heroes: Hero[] = state.heroes;
-        return {
-          ...state, heroes: [
-            ...heroes.slice(0, index),
-            action.payload,
-            ...state.heroes.slice(index + 1)
-          ]
-        };
-      }
-      return state;
+      return adapter.updateOne(
+        { id: action.payload.id, changes: action.payload },
+        state
+      );
     }
     default: {
       return state;
@@ -53,13 +47,16 @@ export function heroReducer(
   }
 }
 
+// get the selectors
+const { selectEntities, selectAll } = adapter.getSelectors();
+
 export const selectHeroState = createFeatureSelector<HeroState>('heroes');
 
 const getSelectedHeroId = (state: HeroState) => state.selectedHeroId;
 
 export const selectAllHeroes = createSelector(
   selectHeroState,
-  state => state.heroes
+  selectAll
 );
 
 const selectCurrentHeroId = createSelector(
@@ -67,10 +64,15 @@ const selectCurrentHeroId = createSelector(
   getSelectedHeroId
 );
 
+const selectHeroEntities = createSelector(
+  selectHeroState,
+  selectEntities
+);
+
 export const selectCurrentHero = createSelector(
-  selectAllHeroes,
+  selectHeroEntities,
   selectCurrentHeroId,
-  (heroes, heroId) => {
-    return heroes.find(hero => hero.id === heroId);
+  (heroEntities, heroId) => {
+    return heroEntities[heroId];
   }
 );
