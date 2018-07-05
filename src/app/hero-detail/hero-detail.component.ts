@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
@@ -13,7 +13,8 @@ import { AppState } from '../store/reducers';
 @Component({
   selector: 'app-hero-detail',
   templateUrl: './hero-detail.component.html',
-  styleUrls: ['./hero-detail.component.css']
+  styleUrls: ['./hero-detail.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroDetailComponent {
   hero: Observable<Hero>;
@@ -27,8 +28,8 @@ export class HeroDetailComponent {
     store.dispatch(new GetHeroAction(id));
 
     this.hero = store.select(selectCurrentHero).pipe(
-      // need a defensive copy to protect the store coming out
-      map(hero => ({ ...hero }))
+      // Can we forego defensive copying using freeze?
+      // map(hero => ({ ...hero }))
     );
   }
 
@@ -37,10 +38,9 @@ export class HeroDetailComponent {
   }
 
   save(hero: Hero): void {
-    // need a defensive copy to protect the store going in
-    this.store.dispatch(new UpdateHeroAction({ ...hero }));
-    // this.store.dispatch(new UpdateHeroAction(hero));
-    // setTimeout(() => hero.name = 'oops', 2000);
+    // Can we forego defensive copying using freeze?
+    this.store.dispatch(new UpdateHeroAction(hero));
+    setTimeout(() => hero.name = 'oops', 2000);
     this.goBack();
   }
 }

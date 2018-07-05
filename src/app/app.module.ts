@@ -3,10 +3,12 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { EffectsModule } from '@ngrx/effects';
-import { StoreModule } from '@ngrx/store';
+import { MetaReducer, StoreModule } from '@ngrx/store';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
+import { storeFreeze } from 'ngrx-store-freeze';
 
+import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
@@ -16,7 +18,9 @@ import { HeroesComponent } from './heroes/heroes.component';
 import { InMemoryDataService } from './in-memory-data.service';
 import { MessagesComponent } from './messages/messages.component';
 import { HeroListEffects } from './store/hero-list.effects';
-import { reducers } from './store/reducers';
+import { AppState, reducers } from './store/reducers';
+
+export const metaReducers: MetaReducer<AppState>[] = environment.production ? [] : [storeFreeze];
 
 @NgModule({
   imports: [
@@ -31,7 +35,7 @@ import { reducers } from './store/reducers';
     HttpClientInMemoryWebApiModule.forRoot(
       InMemoryDataService, { dataEncapsulation: false }
     ),
-    StoreModule.forRoot(reducers),
+    StoreModule.forRoot(reducers, { metaReducers }),
     EffectsModule.forRoot([HeroListEffects]),
     StoreDevtoolsModule.instrument({
       maxAge: 25, // Retains last 25 states
