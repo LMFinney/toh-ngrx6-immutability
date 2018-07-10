@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { List } from 'immutable';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -10,14 +11,15 @@ import { AppState } from '../store/reducers';
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  styleUrls: ['./dashboard.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardComponent {
-  heroes: Observable<Hero[]>;
+  heroes: Observable<List<Hero>>;
 
   constructor(store: Store<AppState>) {
     this.heroes = store.select(selectAllHeroes).pipe(
-      map(heroes => heroes.slice(1, 5))
+      map(heroes => heroes.slice(1, 5).toList())
     );
   }
 }

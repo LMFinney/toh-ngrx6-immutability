@@ -1,16 +1,18 @@
 import { EntityAdapter, EntityState, createEntityAdapter } from '@ngrx/entity';
 import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { List } from 'immutable';
 
 import { Hero } from '../hero';
 import { HeroActionTypes, HeroActionsUnion } from './hero.actions';
 
-export interface HeroState extends EntityState<Hero> {
+export interface HeroState extends EntityState<Partial<Hero>> {
   selectedHeroId?: number;
 }
 
-export const adapter: EntityAdapter<Hero> = createEntityAdapter<Hero>({
-  sortComparer: false,
-});
+export const adapter: EntityAdapter<Partial<Hero>> =
+  createEntityAdapter<Partial<Hero>>({
+    sortComparer: false,
+  });
 
 export const initialState: HeroState = adapter.getInitialState({
   selectedHeroId: undefined,
@@ -30,14 +32,17 @@ export function heroReducer(
       );
     }
     case HeroActionTypes.LoadHeroesSuccess: {
-      return adapter.addAll(action.payload, state);
+      return adapter.addAll(
+        action.payload.toArray().map(hero => hero.toJS()),
+        state
+      );
     }
     case HeroActionTypes.AddHeroSuccess: {
-      return adapter.addOne(action.payload, state);
+      return adapter.addOne(action.payload.toJS(), state);
     }
     case HeroActionTypes.UpdateHeroSuccess: {
       return adapter.updateOne(
-        { id: action.payload.id, changes: action.payload },
+        { id: action.payload.id, changes: action.payload.toJS() },
         state
       );
     }
@@ -54,9 +59,16 @@ export const selectHeroState = createFeatureSelector<HeroState>('heroes');
 
 const getSelectedHeroId = (state: HeroState) => state.selectedHeroId;
 
-export const selectAllHeroes = createSelector(
+const selectAllHeroesArray = createSelector(
   selectHeroState,
-  selectAll
+  selectAll,
+);
+
+export const selectAllHeroes = createSelector(
+  selectAllHeroesArray,
+  params => {
+    return List(params.map(param => new Hero(param)));
+  }
 );
 
 const selectCurrentHeroId = createSelector(
@@ -73,6 +85,6 @@ export const selectCurrentHero = createSelector(
   selectHeroEntities,
   selectCurrentHeroId,
   (heroEntities, heroId) => {
-    return heroEntities[heroId];
+    return new Hero(heroEntities[heroId]);
   }
 );
