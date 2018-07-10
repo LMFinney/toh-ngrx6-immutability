@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
@@ -13,10 +13,11 @@ import { AppState } from '../store/reducers';
 @Component({
   selector: 'app-hero-detail',
   templateUrl: './hero-detail.component.html',
-  styleUrls: ['./hero-detail.component.css']
+  styleUrls: ['./hero-detail.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroDetailComponent {
-  hero: Observable<Hero>;
+  hero: Observable<Partial<Hero>>;
 
   constructor(
     private route: ActivatedRoute,
@@ -27,8 +28,7 @@ export class HeroDetailComponent {
     store.dispatch(new GetHeroAction(id));
 
     this.hero = store.select(selectCurrentHero).pipe(
-      // need a defensive copy to protect the store coming out
-      map(hero => ({ ...hero }))
+      map(hero => hero ? hero.toJS() as Partial<Hero> : undefined)
     );
   }
 
@@ -36,11 +36,8 @@ export class HeroDetailComponent {
     this.location.back();
   }
 
-  save(hero: Hero): void {
-    // need a defensive copy to protect the store going in
-    this.store.dispatch(new UpdateHeroAction({ ...hero }));
-    // this.store.dispatch(new UpdateHeroAction(hero));
-    // setTimeout(() => hero.name = 'oops', 2000);
+  save(hero: Partial<Hero>): void {
+    this.store.dispatch(new UpdateHeroAction(new Hero(hero)));
     this.goBack();
   }
 }

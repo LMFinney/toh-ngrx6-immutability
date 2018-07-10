@@ -1,49 +1,60 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { List, Record } from 'immutable';
 
 import { Hero } from '../hero';
 import { HeroActionTypes, HeroActionsUnion } from './hero.actions';
 
-export interface HeroState {
-  heroes: Hero[];
-  selectedHeroId?: number;
+export class HeroState extends Record({
+  heroes: List(),
+  selectedHeroId: undefined
+}) {
+  readonly heroes: List<Hero>;
+  readonly selectedHeroId?: number;
+
+  assign(values: Partial<HeroState>) {
+    return this.merge(values) as this;
+  }
 }
 
-const initialState: HeroState = {
-  heroes: []
-};
+const initialState = new HeroState();
 
 export function heroReducer(
   state = initialState, action: HeroActionsUnion
 ): HeroState {
   switch (action.type) {
     case HeroActionTypes.GetHeroSuccess: {
-      return { ...state, selectedHeroId: action.payload.id };
+      return state.assign({ selectedHeroId: action.payload.id });
     }
     case HeroActionTypes.DeleteHeroSuccess: {
-      return {
-        ...state,
-        selectedHeroId: undefined,
-        heroes: state.heroes.filter(hero => hero.id !== action.payload.id)
-      };
+      const index = findHeroIndex(state, action.payload.id);
+      if (index >= 0) {
+        return state.assign({
+          selectedHeroId: undefined,
+          heroes: state.heroes.remove(index)
+        });
+      } else {
+        return state;
+      }
     }
     case HeroActionTypes.LoadHeroesSuccess: {
-      return { ...state, heroes: action.payload };
+      return state.assign({ heroes: action.payload });
     }
     case HeroActionTypes.AddHeroSuccess: {
-      return { ...state, heroes: [...state.heroes, action.payload] };
+      return state.assign({ heroes: state.heroes.push(action.payload) });
     }
     case HeroActionTypes.UpdateHeroSuccess: {
-      const index = state.heroes
-        .findIndex((hero: Hero) => hero.id === action.payload.id);
+      const index = findHeroIndex(state, action.payload.id);
       if (index >= 0) {
-        const heroes: Hero[] = state.heroes;
-        return {
-          ...state, heroes: [
-            ...heroes.slice(0, index),
-            action.payload,
-            ...state.heroes.slice(index + 1)
-          ]
-        };
+        return state.assign({
+          heroes: state.heroes.set(index, action.payload)
+        });
+      }
+      return state;
+    }
+    case HeroActionTypes.DeleteHeroSuccess: {
+      const index = findHeroIndex(state, action.payload.id);
+      if (index >= 0) {
+        return state.assign({ heroes: state.heroes.remove(index) });
       }
       return state;
     }
@@ -51,6 +62,10 @@ export function heroReducer(
       return state;
     }
   }
+}
+
+function findHeroIndex(state: HeroState, id: number): number {
+  return state.heroes.findIndex((hero: Hero) => hero.id === id);
 }
 
 export const selectHeroState = createFeatureSelector<HeroState>('heroes');

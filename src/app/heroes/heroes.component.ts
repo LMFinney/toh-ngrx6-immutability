@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { List } from 'immutable';
 import { Observable } from 'rxjs';
 
 import { Hero } from '../hero';
@@ -10,10 +11,11 @@ import { AppState } from '../store/reducers';
 @Component({
   selector: 'app-heroes',
   templateUrl: './heroes.component.html',
-  styleUrls: ['./heroes.component.css']
+  styleUrls: ['./heroes.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HeroesComponent {
-  heroes: Observable<Hero[]>;
+  heroes: Observable<List<Hero>>;
 
   constructor(private store: Store<AppState>) {
     this.heroes = store.select(selectAllHeroes);
