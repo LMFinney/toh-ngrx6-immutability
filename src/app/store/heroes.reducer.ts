@@ -27,10 +27,12 @@ export function heroReducer(
       };
     }
     case HeroActionTypes.LoadHeroesSuccess: {
-      return { ...state, heroes: action.payload };
+      // return { ...state, heroes: action.payload };
+      return { ...state, heroes: [...action.payload.map(hero => ({ ...hero }))] };
     }
     case HeroActionTypes.AddHeroSuccess: {
-      return { ...state, heroes: [...state.heroes, action.payload] };
+      // return { ...state, heroes: [...state.heroes, action.payload] };
+      return { ...state, heroes: [...state.heroes, { ...action.payload }] };
     }
     case HeroActionTypes.UpdateHeroSuccess: {
       const index = state.heroes
@@ -40,7 +42,8 @@ export function heroReducer(
         return {
           ...state, heroes: [
             ...heroes.slice(0, index),
-            action.payload,
+            // action.payload,
+            { ...action.payload },
             ...state.heroes.slice(index + 1)
           ]
         };
@@ -59,7 +62,7 @@ const getSelectedHeroId = (state: HeroState) => state.selectedHeroId;
 
 export const selectAllHeroes = createSelector(
   selectHeroState,
-  state => state.heroes
+  state => [...state.heroes.map(hero => ({ ...hero }))]
 );
 
 const selectCurrentHeroId = createSelector(
@@ -72,5 +75,7 @@ export const selectCurrentHero = createSelector(
   selectCurrentHeroId,
   (heroes, heroId) => {
     return heroes.find(hero => hero.id === heroId);
+    // or (if we defensively copy here instead of in the components)
+    // return { ...heroes.find(hero => hero.id === heroId) };
   }
 );
