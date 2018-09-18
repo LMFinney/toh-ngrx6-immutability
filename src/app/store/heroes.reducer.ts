@@ -1,4 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
+import { Patch, produce } from 'immer';
 
 import { Hero } from '../hero';
 import { HeroActionTypes, HeroActionsUnion } from './hero.actions';
@@ -15,42 +16,38 @@ const initialState: HeroState = {
 export function heroReducer(
   state = initialState, action: HeroActionsUnion
 ): HeroState {
-  switch (action.type) {
-    case HeroActionTypes.GetHeroSuccess: {
-      return { ...state, selectedHeroId: action.payload.id };
-    }
-    case HeroActionTypes.DeleteHeroSuccess: {
-      return {
-        ...state,
-        selectedHeroId: undefined,
-        heroes: state.heroes.filter(hero => hero.id !== action.payload.id)
-      };
-    }
-    case HeroActionTypes.LoadHeroesSuccess: {
-      return { ...state, heroes: action.payload };
-    }
-    case HeroActionTypes.AddHeroSuccess: {
-      return { ...state, heroes: [...state.heroes, action.payload] };
-    }
-    case HeroActionTypes.UpdateHeroSuccess: {
-      const index = state.heroes
-        .findIndex((hero: Hero) => hero.id === action.payload.id);
-      if (index >= 0) {
-        const heroes: Hero[] = state.heroes;
-        return {
-          ...state, heroes: [
-            ...heroes.slice(0, index),
-            action.payload,
-            ...state.heroes.slice(index + 1)
-          ]
-        };
+  return produce(state, draft => {
+    switch (action.type) {
+      case HeroActionTypes.GetHeroSuccess: {
+        draft.selectedHeroId = action.payload.id;
+        return draft;
       }
-      return state;
+      case HeroActionTypes.DeleteHeroSuccess: {
+        draft.selectedHeroId = undefined;
+        draft.heroes = draft.heroes.filter(hero => hero.id !== action.payload.id);
+        return draft;
+      }
+      case HeroActionTypes.LoadHeroesSuccess: {
+        draft.heroes = action.payload;
+        return draft;
+      }
+      case HeroActionTypes.AddHeroSuccess: {
+        draft.heroes.push(action.payload);
+        return draft;
+      }
+      case HeroActionTypes.UpdateHeroSuccess: {
+        const index = draft.heroes
+          .findIndex((hero: Hero) => hero.id === action.payload.id);
+        if (index >= 0) {
+          draft.heroes[index] = action.payload;
+        }
+        return draft;
+      }
+      default: {
+        return draft;
+      }
     }
-    default: {
-      return state;
-    }
-  }
+  });
 }
 
 export const selectHeroState = createFeatureSelector<HeroState>('heroes');
